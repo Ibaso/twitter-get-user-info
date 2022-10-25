@@ -42,20 +42,22 @@ public class Main {
                     .addHeader("x-guest-token", guestToken)
                     .get();
 
+            try {
+                Response response = client.newCall(requestBuilder.build()).execute();
+                JsonObject data = JsonParser.parseString(Objects.requireNonNull(response.body()).string()).getAsJsonObject().get("data").getAsJsonObject();
+                JsonObject user = data.get("user").getAsJsonObject();
+                JsonObject result = user.get("result").getAsJsonObject();
+                TwitterUser twitterUser = new TwitterUser();
+                twitterUser.setCreatedDate(result.get("legacy").getAsJsonObject().get("created_at").getAsString());
+                twitterUser.setUserName(un);
+                twitterUser.setFollowersCount(result.get("legacy").getAsJsonObject().get("followers_count").getAsInt());
+                users.add(twitterUser);
+            }
+            catch (Exception e){
+                System.out.println("User with " + un + " doesn't exists");
+            }
 
-            Response response = client.newCall(requestBuilder.build()).execute();
-            JsonObject data = JsonParser.parseString(Objects.requireNonNull(response.body()).string()).getAsJsonObject().get("data").getAsJsonObject();
-            JsonObject user = data.get("user").getAsJsonObject();
-            JsonObject result = user.get("result").getAsJsonObject();
-            TwitterUser twitterUser = new TwitterUser();
-            twitterUser.setCreatedDate(result.get("legacy").getAsJsonObject().get("created_at").getAsString());
-            twitterUser.setUserName(un);
-            twitterUser.setFollowersCount(result.get("legacy").getAsJsonObject().get("followers_count").getAsInt());
-            users.add(twitterUser);
         }
-
-
-        System.out.println(users.toArray());
 
 
         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("users.csv"), "UTF-8"));
@@ -72,7 +74,9 @@ public class Main {
         }
         bw.flush();
         bw.close();
+        System.out.println("Successfully finished");
     }
+
 }
 
 class TwitterUser {
